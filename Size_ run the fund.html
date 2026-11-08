@@ -1,0 +1,267 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Size: run the fund</title>
+<meta name="description" content="Run a five-desk hedge fund for one quarter.">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;800&family=Instrument+Sans:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#E9EEF2;--sf:#F7F9FB;--ink:#14232E;--mut:#5B6B78;--up:#1F7A6D;--dn:#C2452D;--me:#3B3FD8;--line:#CBD5DC;--on:#fff;color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0E1A22;--sf:#15252F;--ink:#DCE6EC;--mut:#8DA0AD;--up:#3FB8A5;--dn:#E8765C;--me:#8C90FF;--line:#274050;--on:#06131A;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0E1A22;--sf:#15252F;--ink:#DCE6EC;--mut:#8DA0AD;--up:#3FB8A5;--dn:#E8765C;--me:#8C90FF;--line:#274050;--on:#06131A;color-scheme:dark}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font:16px/1.45 "Instrument Sans",system-ui,sans-serif}
+.w{max-width:560px;margin:0 auto;padding:14px 14px 28px}
+h1{font:800 34px/1 "Bricolage Grotesque",system-ui,sans-serif;letter-spacing:-.02em;margin:0}
+.top{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+.tag{color:var(--mut);margin:4px 0 12px;font-size:14px}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.stats div{background:var(--sf);padding:8px 8px 7px}
+.stats small{display:block;color:var(--mut);font-size:11px;line-height:1.2}
+.stats b{font:600 15px "Bricolage Grotesque",system-ui,sans-serif;font-variant-numeric:tabular-nums}
+.hd,.row{display:grid;grid-template-columns:1.2fr 1fr 1fr 1fr;gap:4px;align-items:center}
+.hd{margin:10px 10px 0;color:var(--mut);font-size:11px}
+.row{width:100%;text-align:left;padding:9px 10px;border:1px solid var(--line);border-radius:8px;background:var(--sf);margin-top:5px;font-size:13px;font-variant-numeric:tabular-nums}
+.row[aria-pressed="true"]{border-color:var(--me);box-shadow:inset 0 0 0 1px var(--me)}
+.row b{font-weight:600}
+.up{color:var(--up)}.dn{color:var(--dn)}
+.ev{margin-top:10px;padding:10px 12px;border-radius:10px;color:var(--on);font-weight:600;font-size:14px;line-height:1.3;background:var(--me)}
+.ev[hidden]{display:none}
+#cv{width:100%;height:230px;display:block;background:var(--sf);border:1px solid var(--line);border-radius:10px;margin-top:10px}
+.att{margin-top:8px;font-size:13px;color:var(--mut)}
+.m{height:8px;background:var(--line);border-radius:4px;overflow:hidden;margin-top:4px}
+.m i{display:block;height:100%;width:0;background:var(--me);transition:width .3s}
+.m i#sb{background:var(--dn)}
+#log{min-height:22px;margin:10px 0 2px;font-size:14px}
+.sz{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:6px 0}
+button{font:inherit;color:inherit;cursor:pointer}
+.sz button{padding:10px 0;border:1px solid var(--line);background:var(--sf);border-radius:8px;font-weight:600}
+.sz button[aria-pressed="true"]{border-color:var(--me);box-shadow:inset 0 0 0 1px var(--me);color:var(--me)}
+.go{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.go button{padding:16px 0;border:0;border-radius:10px;font:800 18px "Bricolage Grotesque",system-ui,sans-serif;color:var(--on)}
+#buy{background:var(--up)}#sell{background:var(--dn)}
+.sub{display:flex;gap:8px;margin-top:8px}
+.sub button{flex:1;padding:9px 0;border:1px solid var(--line);background:transparent;border-radius:8px;font-size:14px}
+button:focus-visible{outline:2px solid var(--me);outline-offset:2px}
+#ov{position:fixed;inset:0;background:rgba(10,20,28,.74);display:flex;align-items:center;justify-content:center;padding:18px;z-index:5}
+#ov[hidden]{display:none}
+.card{background:var(--sf);border:1px solid var(--line);border-radius:14px;padding:20px;max-width:460px;width:100%;max-height:90vh;overflow:auto}
+.card h2{font:800 28px/1.1 "Bricolage Grotesque",system-ui,sans-serif;margin:0 0 8px}
+.card p{margin:6px 0 12px}
+.card .opt{display:block;width:100%;text-align:left;padding:12px 14px;margin-top:8px;border:1px solid var(--line);border-radius:10px;background:var(--bg)}
+.card .opt b{font:800 17px "Bricolage Grotesque",system-ui,sans-serif}
+.big{font:800 40px/1 "Bricolage Grotesque",system-ui,sans-serif;margin:4px 0 10px}
+.card ul{padding-left:18px;margin:0 0 12px;color:var(--mut);font-size:14px}
+</style></head>
+<body><div class="w">
+<div class="top"><h1>Size</h1></div>
+<p class="tag">You run the fund. Five desks, one quarter, and everyone is watching.</p>
+<div class="stats">
+<div><small>NAV</small><b id="nv"></b></div>
+<div><small>Quarter P&amp;L (goal +$5M)</small><b id="pl"></b></div>
+<div><small>Leverage</small><b id="lv"></b></div>
+<div><small>Day</small><b id="dy"></b></div>
+</div>
+<div class="hd"><span>Desk</span><span>Price</span><span>Exposure</span><span>Desk P&amp;L</span></div>
+<div id="desks"></div>
+<div class="ev" id="ev" hidden></div>
+<canvas id="cv" aria-label="Candlestick chart of the selected desk"></canvas>
+<div class="att"><span id="al"></span><div class="m"><i id="mb"></i></div></div>
+<div class="att"><span id="sl"></span><div class="m"><i id="sb"></i></div></div>
+<div id="log" aria-live="polite"></div>
+<div class="sz" id="sz"></div>
+<div class="go"><button id="buy">Buy</button><button id="sell">Sell</button></div>
+<div class="sub"><button id="pz">Pause</button><button id="sp">Speed 1×</button><button id="nw">Restart</button></div>
+</div>
+<div id="ov"><div class="card" id="card"></div></div>
+<script>
+const $=s=>document.querySelector(s);
+const TPC=6,MAXC=63,TICK=450,NAV0=1e8,SIZES=[1,4,12,30];
+const D=[{n:"Energy",L:8,b:.9,s:.0016},{n:"Tech",L:12,b:1.2,s:.0014},{n:"Financials",L:10,b:1,s:.0013},{n:"Defense",L:4,b:.3,s:.0012},{n:"Havens",L:14,b:-.3,s:.0008}];
+const EV=[
+{t:"Missile strike near a major shipping lane.",j:[.06,-.03,-.03,.05,.03],n:4,vol:2.5,vt:24},
+{t:"Surprise ceasefire announced.",j:[-.05,.03,.03,-.04,-.02],n:4,vol:2,vt:20},
+{t:"New sanctions on a major oil producer.",j:[.04,-.015,-.04,.02,.02],n:3,vol:2,vt:20},
+{t:"Central bank hikes by surprise.",j:[-.01,-.045,.035,0,-.03],n:2,vol:2.5,vt:18},
+{t:"Chip export ban announced.",j:[0,-.06,0,.02,.01],n:3,vol:2,vt:18},
+{t:"Regional bank run spreads.",j:[0,-.03,-.07,0,.04],n:4,vol:2.5,vt:22},
+{t:"Oil glut: producers refuse to cut.",j:[-.06,.01,-.01,0,0],n:3,vol:1.8,vt:16},
+{t:"Defense budget surge passes.",j:[0,0,0,.07,-.01],n:2,vol:1.8,vt:14},
+{t:"Risk-on melt-up.",j:[.03,.04,.04,.01,-.04],n:4,vol:1.8,vt:16},
+{t:"Liquidity vacuum: market makers pulled their quotes. Your orders hurt 2.5× as much.",j:[0,0,0,0,0],n:1,vol:1.6,vt:25,lt:25,lx:2.5}];
+const fmt=n=>Math.round(n).toLocaleString("en-US");
+const usd=n=>(n<0?"-":"")+"$"+fmt(Math.abs(n));
+const M=n=>(n<0?"-":"")+"$"+(Math.abs(n)/1e6).toFixed(1)+"M";
+const px=n=>n.toFixed(2);
+const gauss=()=>Math.sqrt(-2*Math.log(1-Math.random()))*Math.cos(6.2832*Math.random());
+let S,A,timer;
+const imp=(a,N)=>0.014*Math.sqrt(N/D[a.i].L)*(S.liqt>0?S.liqx:1);
+const exitC=a=>{const N=Math.abs(a.pos)*a.price/1e6;return N*1e6*imp(a,N)/2};
+const pnl=a=>a.cash+a.pos*a.price-exitC(a);
+const nav=()=>NAV0-S.fines+A.reduce((s,a)=>s+pnl(a),0);
+const gross=()=>A.reduce((s,a)=>s+Math.abs(a.pos)*a.price,0);
+const say=(t,bad,d)=>{S.evx=t;S.evb=bad;S.evt=d};
+
+function newGame(){
+  A=D.map((d,i)=>({i,fair:100,dev:0,price:100,f:0,pos:0,cash:0,c:[],cur:null,halt:0,hc:0,tr:[]}));
+  S={sel:0,size:4,speed:1,paused:false,over:false,tk:0,next:24,cool:0,rn:0,rp:[],volx:1,volt:0,liqx:1,liqt:0,evt:0,evb:0,evx:"",heat:0,hold:0,fines:0,w35:false,w60:false,lev:2,cut:false,low:NAV0,maxI:0,log:"Tap a desk, pick a size, then buy or sell."};
+  A.forEach(a=>mark(a,false));
+}
+function mark(a,tick){
+  if(!a.cur||a.cur.n>=TPC){a.cur={o:a.price,h:a.price,l:a.price,c:a.price,v:0,my:0,n:0};a.c.push(a.cur)}
+  const c=a.cur;c.h=Math.max(c.h,a.price);c.l=Math.min(c.l,a.price);c.c=a.price;
+  if(tick){c.n++;c.v+=1.2+1.6*Math.random()}
+}
+function step(){
+  if(S.over||S.paused)return;
+  S.tk++;events();
+  if(S.rn>0){A.forEach((a,i)=>a.fair*=1+S.rp[i]);S.rn--}
+  const m=.0009*gauss(),vx=S.volt>0?S.volx:1;
+  A.forEach(a=>{
+    if(a.hc>0)a.hc--;
+    if(a.halt>0){a.halt--;mark(a,true);return}
+    const d=D[a.i];
+    a.fair*=1+d.b*m+d.s*vx*gauss();a.fair+=(100-a.fair)*.003;
+    a.dev=a.dev*.965+.0018*a.f*a.fair;a.f*=.88;
+    a.price=a.fair+a.dev;mark(a,true);
+    if(a.hc<=0&&Math.abs(a.cur.c/a.cur.o-1)>.05){a.halt=12;a.hc=24;say(d.n+" circuit breaker: halted at "+px(a.price)+". It reopens in 2 candles.",1,12)}
+  });
+  if(S.volt>0)S.volt--;if(S.liqt>0)S.liqt--;if(S.evt>0)S.evt--;if(S.cool>0)S.cool--;if(S.hold>0)S.hold--;
+  S.heat=Math.max(0,S.heat-.25);if(S.heat<30)S.w35=S.w60=false;
+  const v=nav();S.low=Math.min(S.low,v);
+  if(v<85e6)return finish("Fund wound down");
+  if(v<92e6&&!S.cut){S.cut=true;S.lev=1;say("Risk committee cuts your gross limit to 1×. Get smaller.",1,30)}
+  if(A[0].cur.n>=TPC&&A[0].c.length>=MAXC)finish();
+}
+function fire(e){
+  S.rn=e.n;S.rp=e.j.map(j=>j/e.n);S.volx=e.vol||1;S.volt=e.vt||0;
+  if(e.lt){S.liqx=e.lx;S.liqt=e.lt}
+  if(e.f)A[e.i].f+=e.f;
+  const mv=e.j.map((j,i)=>Math.abs(j)>=.02?D[i].n+" "+(j>0?"+":"−")+Math.abs(j*100).toFixed(0)+"%":"").filter(Boolean).join(", ");
+  say(e.t+(mv?" "+mv+".":""),0,Math.max(e.vt||0,e.lt||0,e.n));S.cool=18;
+  if(navigator.vibrate)navigator.vibrate(80);
+}
+function events(){
+  if(S.cool>0)return;
+  for(const a of A){if(a.pos*a.price<-8e6&&Math.random()<.012){const j=[0,0,0,0,0];j[a.i]=.09;return fire({t:"Short squeeze in "+D[a.i].n+": shorts are covering at any price.",j,n:8,vol:2,vt:20,i:a.i,f:3})}}
+  if(S.tk<S.next)return;
+  S.next=S.tk+30+Math.random()*35;
+  fire(EV[Math.floor(Math.random()*EV.length)]);
+}
+function watch(a,d,N){
+  let h=0,why="";
+  const last=a.tr[a.tr.length-2];
+  if(a.cur.n>=TPC-1&&N>=12){h+=18;why="marking the close"}
+  if(last&&last.d!==d&&S.tk-last.tk<=18&&Math.min(N,last.N)>=4&&S.evt<=0){h+=20;why="wash-style round trip"}
+  if(N>=12&&a.f*d>2.2){h+=14;why="momentum ignition"}
+  if(a.tr.filter(t=>t.d===d&&t.N>=4&&S.tk-t.tk<=18).length>=4){h+=12;why="pumping pattern"}
+  if(!h)return;
+  S.heat=Math.min(100,S.heat+h);S.log+=" Flagged: "+why+".";
+  if(S.heat>=100){S.fines+=2e6;S.hold=5*TPC;S.heat=40;S.w35=S.w60=false;say("SEC enforcement: $2M fine for "+why+". Trading suspended for 5 candles, headlines keep coming.",1,30)}
+  else if(S.heat>=60&&!S.w60){S.w60=true;say("SEC inquiry opened. Orders are capped at $4M while you’re under review.",1,20)}
+  else if(S.heat>=35&&!S.w35){S.w35=true;say("SEC surveillance has flagged your trading pattern.",1,16)}
+}
+function trade(i,d,N,force){
+  const a=A[i];if(S.over)return;
+  if(!force){
+    if(S.hold>0){S.log="Suspended by the regulator for "+Math.ceil(S.hold/TPC)+" more candles.";return}
+    if(a.halt>0){S.log=D[i].n+" is halted.";return}
+    if(S.heat>=60&&N>4){S.log="Rejected: under SEC review, orders are capped at $4M.";return}
+    if(a.pos*d>=0&&gross()+N*1e6>S.lev*nav()){S.log="Rejected: over the "+S.lev+"× gross limit.";return}
+  }
+  const q=N*1e6/a.price,I=imp(a,N),p0=a.price,fill=p0*(1+d*(I/2+.0004));
+  a.cash-=d*q*fill;a.pos+=d*q;
+  a.dev+=d*I*a.fair*.6;a.fair*=1+d*I*.4;a.f+=d*N/(3*D[i].L);
+  a.price=a.fair+a.dev;mark(a,false);a.cur.my+=N;
+  a.tr.push({c:a.c.length-1,p:fill,d,N,tk:S.tk});S.maxI=Math.max(S.maxI,I);
+  S.log=D[i].n+": "+(d>0?"bought":"sold")+" $"+(+N.toFixed(1))+"M at "+px(fill)+", pushed the price "+(I*100).toFixed(1)+"%.";
+  if(!force)watch(a,d,N);
+}
+function finish(why){
+  if(S.over)return;
+  A.forEach((a,i)=>{if(a.pos)trade(i,a.pos>0?-1:1,Math.abs(a.pos)*a.price/1e6,true)});
+  S.over=true;clearTimeout(timer);render();
+  const end=NAV0-S.fines+A.reduce((s,a)=>s+a.cash,0),r=(end/NAV0-1)*100;
+  const best=A.reduce((x,y)=>y.cash>x.cash?y:x),worst=A.reduce((x,y)=>y.cash<x.cash?y:x);
+  card("<h2>"+(why||"Quarter closed")+"</h2><div class=big>"+(r>=0?"+":"")+r.toFixed(1)+"%</div><p>"+(r>=5?"Target hit. The investors are thrilled and the SEC is still watching.":r>=0?"Positive, but under the 5% target. The bonus pool stays shut.":"Down on the quarter. Investors want a meeting.")+"</p><ul><li>P&amp;L "+usd(end-NAV0)+" against a +$5M goal</li><li>Best desk: "+D[best.i].n+" "+usd(best.cash)+". Worst: "+D[worst.i].n+" "+usd(worst.cash)+"</li><li>Lowest NAV: "+M(S.low)+"</li><li>Biggest single push: "+(S.maxI*100).toFixed(1)+"%</li>"+(S.fines?"<li>SEC fines: "+usd(S.fines)+"</li>":"")+"</ul><button class=opt data-m=go><b>Run another quarter</b></button>");
+}
+function card(h){$("#card").innerHTML=h;$("#ov").hidden=false}
+function intro(){card("<h2>Size</h2><p>You’re the CIO. Energy, Tech, Financials, Defense and Havens each run a book, and you decide who gets risk. Big orders move prices, other traders pile in, and headlines hit sectors unevenly. Front-run the ramp, or get run over.</p><p>Goal: +5% in 63 days. Down 8% and the risk committee halves your leverage. Down 15% and investors pull the fund. The SEC is watching for pumping, round trips and marking the close.</p><button class=opt data-m=go><b>Open the quarter</b></button>")}
+function begin(){newGame();$("#ov").hidden=true;build();render();clearTimeout(timer);loop()}
+function loop(){step();render();if(!S.over)timer=setTimeout(loop,TICK/S.speed)}
+function build(){
+  $("#desks").innerHTML=D.map((d,i)=>"<button class=row data-i="+i+"><b>"+d.n+"</b><span></span><span></span><span></span></button>").join("");
+  $("#sz").innerHTML=SIZES.map(s=>"<button data-s="+s+">$"+s+"M</button>").join("");
+}
+function render(){
+  const v=nav(),g=gross();
+  $("#nv").textContent=M(v);
+  const p=v-NAV0;$("#pl").textContent=(p>=0?"+":"")+usd(p);$("#pl").className=p>=0?"up":"dn";
+  $("#lv").textContent=(g/v).toFixed(2)+"× / "+S.lev+"×";
+  $("#dy").textContent=Math.min(A[0].c.length,MAXC)+"/"+MAXC;
+  [...$("#desks").children].forEach((r,i)=>{
+    const a=A[i],c=r.children,q=pnl(a);
+    r.setAttribute("aria-pressed",i===S.sel);
+    c[1].textContent=px(a.price)+(a.halt>0?" halted":"");
+    c[2].textContent=M(a.pos*a.price);
+    c[3].textContent=usd(q);c[3].className=q>=0?"up":"dn";
+  });
+  [...$("#sz").children].forEach(b=>b.setAttribute("aria-pressed",+b.dataset.s===S.size));
+  const a=A[S.sel],at=Math.min(1,Math.abs(a.f)/2.5);$("#mb").style.width=(at*100)+"%";
+  $("#al").textContent=D[S.sel].n+" attention: "+(at<.12?"unnoticed":at<.4?"they’ve noticed you":at<.75?"being front-run":"stampede");
+  $("#sb").style.width=S.heat+"%";
+  $("#sl").textContent=S.hold>0?"SEC: suspended, "+Math.ceil(S.hold/TPC)+" candles left":S.heat>=60?"SEC: under review, orders capped at $4M":S.heat>=35?"SEC: flagged":"SEC: clear";
+  $("#log").textContent=S.log;
+  const ev=$("#ev");ev.hidden=S.evt<=0||S.over;if(!ev.hidden){ev.textContent=S.evx;ev.style.background=S.evb?"var(--dn)":"var(--me)"}
+  $("#pz").textContent=S.paused?"Resume":"Pause";$("#sp").textContent="Speed "+S.speed+"×";
+  draw();
+}
+function draw(){
+  const a=A[S.sel],cv=$("#cv"),dpr=window.devicePixelRatio||1,W=cv.clientWidth,H=cv.clientHeight;
+  if(cv.width!==Math.round(W*dpr)){cv.width=Math.round(W*dpr);cv.height=Math.round(H*dpr)}
+  const g=cv.getContext("2d");g.setTransform(dpr,0,0,dpr,0,0);g.clearRect(0,0,W,H);
+  const cs=getComputedStyle(document.documentElement),C=n=>cs.getPropertyValue(n).trim();
+  const N=36,all=a.c.slice(-N),off=a.c.length-all.length;
+  let hi=-1e9,lo=1e9;all.forEach(c=>{hi=Math.max(hi,c.h);lo=Math.min(lo,c.l)});
+  const be=a.pos?-a.cash/a.pos:null;
+  if(be){hi=Math.max(hi,be);lo=Math.min(lo,be)}
+  const pad=(hi-lo)*.1||.5;hi+=pad;lo-=pad;
+  const R=46,B=34,pw=W-R,ph=H-B-6,cw=pw/N,y=p=>6+(hi-p)/(hi-lo)*ph;
+  g.font="11px 'Instrument Sans',system-ui,sans-serif";g.textBaseline="middle";
+  for(let k=0;k<=4;k++){const p=lo+(hi-lo)*k/4,yy=y(p);g.strokeStyle=C("--line");g.lineWidth=1;g.beginPath();g.moveTo(0,yy);g.lineTo(pw,yy);g.stroke();g.fillStyle=C("--mut");g.fillText(px(p),pw+5,yy)}
+  const vm=Math.max(...all.map(c=>c.v+c.my/4),1);
+  all.forEach((c,i)=>{
+    const x=i*cw+cw/2,bw=cw*.62,vh=B-8,h1=c.v/vm*vh,h2=c.my/4/vm*vh;
+    g.fillStyle=C("--mut");g.globalAlpha=.35;g.fillRect(x-bw/2,H-h1,bw,h1);g.globalAlpha=1;
+    g.fillStyle=C("--me");g.fillRect(x-bw/2,H-h1-h2,bw,h2);
+    const col=C(c.c>=c.o?"--up":"--dn");g.strokeStyle=col;g.fillStyle=col;
+    g.beginPath();g.moveTo(x,y(c.h));g.lineTo(x,y(c.l));g.stroke();
+    const t=y(Math.max(c.o,c.c)),b=y(Math.min(c.o,c.c));g.fillRect(x-bw/2,t,bw,Math.max(1.5,b-t));
+  });
+  if(be){const yy=y(be);g.strokeStyle=C("--me");g.fillStyle=C("--me");g.setLineDash([6,4]);g.beginPath();g.moveTo(0,yy);g.lineTo(pw,yy);g.stroke();g.setLineDash([]);g.fillText("your cost",4,yy-7)}
+  a.tr.forEach(t=>{
+    const i=t.c-off;if(i<0)return;const x=i*cw+cw*.12,yy=y(t.p),s=5;
+    g.fillStyle=C("--me");g.strokeStyle=C("--sf");g.lineWidth=1.5;g.beginPath();
+    if(t.d>0){g.moveTo(x-s,yy+s);g.lineTo(x+s,yy+s);g.lineTo(x,yy-s+1)}else{g.moveTo(x-s,yy-s);g.lineTo(x+s,yy-s);g.lineTo(x,yy+s-1)}
+    g.closePath();g.stroke();g.fill();
+  });
+  const yc=y(a.price);g.fillStyle=C(a.cur.c>=a.cur.o?"--up":"--dn");g.fillRect(pw,yc-9,R,18);g.fillStyle=C("--on");g.fillText(px(a.price),pw+5,yc);
+  g.fillStyle=C("--mut");g.font="600 12px 'Instrument Sans',system-ui,sans-serif";g.fillText(D[S.sel].n+(a.halt>0?" (halted)":""),6,14);
+}
+$("#desks").addEventListener("click",e=>{const b=e.target.closest("[data-i]");if(!b)return;S.sel=+b.dataset.i;render()});
+$("#sz").addEventListener("click",e=>{const b=e.target.closest("[data-s]");if(!b)return;S.size=+b.dataset.s;render()});
+$("#buy").onclick=()=>{trade(S.sel,1,S.size);render()};
+$("#sell").onclick=()=>{trade(S.sel,-1,S.size);render()};
+$("#pz").onclick=()=>{S.paused=!S.paused;render()};
+$("#sp").onclick=()=>{S.speed=S.speed===1?2:S.speed===2?4:1;render()};
+$("#nw").onclick=()=>{clearTimeout(timer);intro()};
+$("#card").addEventListener("click",e=>{if(e.target.closest("[data-m]"))begin()});
+addEventListener("keydown",e=>{
+  if(!S||S.over||!$("#ov").hidden)return;
+  const k=e.key.toLowerCase();
+  if(k==="b")$("#buy").click();else if(k==="s")$("#sell").click();else if(k===" "){e.preventDefault();$("#pz").click()}
+});
+addEventListener("resize",()=>S&&draw());
+matchMedia("(prefers-color-scheme: dark)").addEventListener("change",()=>S&&draw());
+newGame();S.paused=true;build();render();intro();
+</script></body></html>
